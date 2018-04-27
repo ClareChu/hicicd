@@ -26,27 +26,35 @@ import (
 	"k8s.io/apimachinery/pkg/api/errors"
 	"fmt"
 	"github.com/jinzhu/copier"
+	"os"
+	"github.com/hidevopsio/hiboot/pkg/system"
+	"gopkg.in/yaml.v2"
+	"github.com/hidevopsio/hicicd/pkg/orch/istio"
+	"path/filepath"
 )
 
 type DeploymentConfig struct {
 	Name      string
 	Namespace string
-	ImageTag  string
-
+	FullName  string
+	Version   string
 	Interface appsv1.DeploymentConfigInterface
 }
 
-func NewDeploymentConfig(name, namespace string) (*DeploymentConfig, error) {
+func NewDeploymentConfig(name, namespace, version string) (*DeploymentConfig, error) {
 	log.Debug("NewDeploymentConfig()")
 
 	clientSet, err := appsv1.NewForConfig(k8s.Config)
 	if err != nil {
 		return nil, err
 	}
+	fullName := name + "-" + version
+
 	return &DeploymentConfig{
 		Name:      name,
 		Namespace: namespace,
-
+		FullName:  fullName,
+		Version: version,
 		Interface: clientSet.DeploymentConfigs(namespace),
 	}, nil
 }
@@ -63,9 +71,10 @@ func (dc *DeploymentConfig) Create(env interface{}, ports interface{}, replicas 
 
 	cfg := &v1.DeploymentConfig{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: dc.Name,
+			Name: dc.FullName,
 			Labels: map[string]string{
 				"app": dc.Name,
+				"version": dc.Version,
 			},
 		},
 		Spec: v1.DeploymentConfigSpec{
@@ -73,6 +82,7 @@ func (dc *DeploymentConfig) Create(env interface{}, ports interface{}, replicas 
 
 			Selector: map[string]string{
 				"app": dc.Name,
+				"version": dc.Version,
 			},
 
 			Strategy: v1.DeploymentStrategy{
@@ -84,6 +94,7 @@ func (dc *DeploymentConfig) Create(env interface{}, ports interface{}, replicas 
 					Name: dc.Name,
 					Labels: map[string]string{
 						"app":  dc.Name,
+						"version": dc.Version,
 					},
 				},
 				Spec: corev1.PodSpec{
@@ -144,7 +155,7 @@ func (dc *DeploymentConfig) Create(env interface{}, ports interface{}, replicas 
 						},
 						From: corev1.ObjectReference{
 							Kind:      "ImageStreamTag",
-							Name:      dc.Name + ":" + dc.ImageTag,
+							Name:      dc.Name + ":" + dc.Version,
 							Namespace: dc.Namespace,
 						},
 					},
@@ -152,10 +163,14 @@ func (dc *DeploymentConfig) Create(env interface{}, ports interface{}, replicas 
 			},
 		},
 	}
-
 	// inject side car here
-
+	err := dc.InjectSideCar(cfg)
+	if err != nil {
+		return err
+	}
 	result, err := dc.Interface.Get(dc.Name, metav1.GetOptions{})
+
+
 	switch {
 	case err == nil:
 		// select update or patch according to the user's request
@@ -212,3 +227,30 @@ func (dc *DeploymentConfig) Instantiate() (*v1.DeploymentConfig, error)  {
 
 	return d, err
 }
+
+func (dc *DeploymentConfig) InjectSideCar(cfg *v1.DeploymentConfig)  (error){
+	in, err :=	yaml.Marshal(cfg)
+	if err != nil {
+		log.Print("test to yml",err)
+		return err
+	}
+	b := &istio.Builder{
+		Path:       os.TempDir(),
+		Name:       dc.FullName,
+		FileType:   "yml",
+		ConfigType: system.Configuration{},
+	}
+	err = b.WriterFile(in)
+	if err != nil {
+		log.Print("test to yml",err)
+		return err
+	}
+	path := filepath.Join(os.TempDir(), dc.FullName + ".yml")
+	 err = istio.IntoResource(path, cfg)
+	if err != nil {
+		log.Print("test to yml",err)
+	}
+	return nil
+}
+
+

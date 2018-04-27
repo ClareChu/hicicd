@@ -21,4 +21,3 @@ import (
 type JavaPipeline struct{
 	ci.Pipeline
 }
-

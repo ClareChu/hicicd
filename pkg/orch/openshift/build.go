@@ -39,8 +39,7 @@ type BuildConfig struct {
 	Name      string
 	Namespace string
 	Scm       Scm
-	ImageTag  string
-
+	Version   string
 	// use NewFrom when creating new buildConfig
 	NewFrom corev1.ObjectReference
 	From corev1.ObjectReference
@@ -53,7 +52,7 @@ type BuildConfig struct {
 // @Description Create new BuildConfig Instance
 // @Param namespace, appName, gitUrl, imageTag, s2iImageStream string
 // @Return *BuildConfig, error
-func NewBuildConfig(namespace, appName, scmUrl, scmRef, scmSecret, imageTag, s2iImageStream string) (*BuildConfig, error) {
+func NewBuildConfig(namespace, appName, scmUrl, scmRef, scmSecret, version, s2iImageStream string) (*BuildConfig, error) {
 
 	log.Debug("NewBuildConfig()")
 
@@ -70,7 +69,7 @@ func NewBuildConfig(namespace, appName, scmUrl, scmRef, scmSecret, imageTag, s2i
 
 		From: corev1.ObjectReference{
 			Kind:      "ImageStreamTag",
-			Name:      appName + ":" + imageTag,
+			Name:      appName + ":" + version,
 			Namespace: namespace,
 		},
 
@@ -82,7 +81,7 @@ func NewBuildConfig(namespace, appName, scmUrl, scmRef, scmSecret, imageTag, s2i
 			Secret: scmSecret,
 		},
 
-		ImageTag: imageTag,
+		Version: version,
 
 	}
 	return buildConfig, err
@@ -157,7 +156,7 @@ func (b *BuildConfig) Create() (*v1.BuildConfig, error) {
 				Output: v1.BuildOutput{
 					To: &corev1.ObjectReference{
 						Kind: "ImageStreamTag",
-						Name: b.Name + ":" + b.ImageTag,
+						Name: b.Name + ":" + b.Version,
 					},
 				},
 			},

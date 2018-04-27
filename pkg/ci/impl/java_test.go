@@ -39,7 +39,7 @@ func TestJavaPipeline(t *testing.T)  {
 	java.Init(&ci.Pipeline{
 		Name: "java",
 		Profile: "dev",
-		App: "hello-world",
+		App: "customer",
 		Project: "demo",
 		Scm: ci.Scm{Url: os.Getenv("SCM_URL")},
 		DeploymentConfigs: ci.DeploymentConfigs{

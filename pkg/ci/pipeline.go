@@ -23,8 +23,8 @@ import (
 	"github.com/hidevopsio/hicicd/pkg/orch/k8s"
 	"github.com/hidevopsio/hicicd/pkg/orch/openshift"
 	"github.com/hidevopsio/hicicd/pkg/orch"
+	"github.com/hidevopsio/hicicd/pkg/orch/istio"
 )
-
 
 type Scm struct {
 	Type string `json:"type"`
@@ -33,18 +33,24 @@ type Scm struct {
 }
 
 type DeploymentConfigs struct {
-	HealthEndPoint  string 		 `json:"health_end_point"`
-	Skip            bool          `json:"skip"`
-	ForceUpdate 	bool          `json:"force_update"`
-	Replicas    	int32         `json:"replicas"`
-	Env         	[]system.Env  `json:"env"`
+	HealthEndPoint string       `json:"health_end_point"`
+	Skip           bool         `json:"skip"`
+	ForceUpdate    bool         `json:"force_update"`
+	Replicas       int32        `json:"replicas"`
+	Env            []system.Env `json:"env"`
 }
 
 type BuildConfigs struct {
 	Skip        bool         `json:"skip"`
-	Tag         string       `json:"tag"`
 	ImageStream string       `json:"image_stream"`
 	Env         []system.Env `json:"env"`
+}
+
+type IstioConfigs struct {
+	Hub        string `json:"hub"`
+	Tag        string `json:"tag"`
+	Debug      bool   `json:"debug"`
+	Privileged bool   `json:"privileged"`
 }
 
 type Pipeline struct {
@@ -61,6 +67,7 @@ type Pipeline struct {
 	Ports             []orch.Ports      `json:"ports"`
 	BuildConfigs      BuildConfigs      `json:"build_configs"`
 	DeploymentConfigs DeploymentConfigs `json:"deployment_configs"`
+	IstioConfigs      IstioConfigs      `json:"istio_configs"`
 }
 
 type Configuration struct {
@@ -134,7 +141,7 @@ func (p *Pipeline) Build(secret string, completedHandler func() error) error {
 	}
 
 	scmUrl := p.CombineScmUrl()
-	buildConfig, err := openshift.NewBuildConfig(p.Namespace, p.App, scmUrl, p.Scm.Ref, secret, p.BuildConfigs.Tag, p.BuildConfigs.ImageStream)
+	buildConfig, err := openshift.NewBuildConfig(p.Namespace, p.App, scmUrl, p.Scm.Ref, secret, p.Version, p.BuildConfigs.ImageStream)
 	if err != nil {
 		return err
 	}
@@ -174,11 +181,11 @@ func (p *Pipeline) Analysis() error {
 	return nil
 }
 
-func (p *Pipeline) CreateDeploymentConfig(force bool) error {
+func (p *Pipeline) CreateDeploymentConfig(force bool, cb func(cfg interface{}) error) error {
 	log.Debug("Pipeline.CreateDeploymentConfig()")
 
 	// new dc instance
-	dc, err := openshift.NewDeploymentConfig(p.App, p.Namespace)
+	dc, err := openshift.NewDeploymentConfig(p.App, p.Namespace, p.Version)
 	if err != nil {
 		return err
 	}
@@ -200,7 +207,7 @@ func (p *Pipeline) Deploy() error {
 	log.Debug("Pipeline.Deploy()")
 
 	// new dc instance
-	dc, err := openshift.NewDeploymentConfig(p.App, p.Namespace)
+	dc, err := openshift.NewDeploymentConfig(p.App, p.Namespace, p.Version)
 	if err != nil {
 		return err
 	}
@@ -258,7 +265,12 @@ func (p *Pipeline) Run(username, password string, isToken bool) error {
 		if !p.DeploymentConfigs.Skip {
 
 			// create dc - deployment config
-			err = p.CreateDeploymentConfig(p.DeploymentConfigs.ForceUpdate)
+			err = p.CreateDeploymentConfig(p.DeploymentConfigs.ForceUpdate, func(cfg interface{}) error{
+				err := istio.InjectSideCar(cfg, p.Name, p.Version )
+				if err != nil {
+					return err
+				}
+			})
 			if err != nil {
 				log.Error(err.Error())
 				return fmt.Errorf("failed on CreateDeploymentConfig! %s", err.Error())

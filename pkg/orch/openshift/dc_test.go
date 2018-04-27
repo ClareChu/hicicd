@@ -30,7 +30,7 @@ func TestDeploymentConfigCreation(t *testing.T) {
 	namespace := projectName + "-" + profile
 	app := "hello-world"
 	healthEndPoint := "http://localhost:8080/health"
-
+	version := "v1"
 	env := []system.Env{
 		{
 			Name:  "SPRING_PROFILES_ACTIVE",
@@ -58,7 +58,7 @@ func TestDeploymentConfigCreation(t *testing.T) {
 	}
 
 	// new dc instance
-	dc, err := NewDeploymentConfig(app, namespace)
+	dc, err := NewDeploymentConfig(app, namespace, version)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, app, dc.Name)
 
@@ -75,8 +75,8 @@ func TestDeploymentConfigInstantiation(t *testing.T) {
 	profile := "dev"
 	namespace := projectName + "-" + profile
 	app := "hello-world"
-
-	dc, err := NewDeploymentConfig(app, namespace)
+	version := "v1"
+	dc, err := NewDeploymentConfig(app, namespace, version)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, app, dc.Name)
 
@@ -93,8 +93,8 @@ func TestDeploymentConfigDeletion(t *testing.T) {
 	profile := "dev"
 	namespace := projectName + "-" + profile
 	app := "hello-world"
-
-	dc, err := NewDeploymentConfig(app, namespace)
+	version := "v1"
+	dc, err := NewDeploymentConfig(app, namespace, version)
 	assert.Equal(t, nil, err)
 	assert.Equal(t, app, dc.Name)
 

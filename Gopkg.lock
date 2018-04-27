@@ -137,7 +137,7 @@
   branch = "master"
   name = "github.com/hidevopsio/hiboot"
   packages = ["pkg/application","pkg/log","pkg/model","pkg/system","pkg/utils"]
-  revision = "bdc01a32f7c32a5f2a8278285e2c890f5b6e2071"
+  revision = "5663e5540ba41211ebaef61c6454651502b3cbfa"
 
 [[projects]]
   branch = "master"
