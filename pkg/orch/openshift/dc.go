@@ -159,15 +159,12 @@ func (dc *DeploymentConfig) Create(env interface{}, ports interface{}, replicas 
 			},
 		},
 	}
-/*	err := cb(cfg)
+	err := cb(cfg)
 	if err != nil {
 		return err
-	}*/
+	}
 	// inject side car here
 	result, err := dc.Interface.Get(dc.FullName, metav1.GetOptions{})
-
-	err = cb(result)
-
 	switch {
 	case err == nil:
 		// select update or patch according to the user's request
