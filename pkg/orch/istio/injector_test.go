@@ -8,6 +8,7 @@ import (
 	"log"
 	"istio.io/istio/pilot/pkg/model"
 	"istio.io/istio/pilot/pkg/kube/inject"
+<<<<<<< HEAD
 	"path/filepath"
 	"os"
 	"github.com/magiconair/properties/assert"
@@ -23,6 +24,23 @@ func TestIntoResourceFile(t *testing.T)  {
 	path := filepath.Join(os.TempDir(), "in.yaml")
 	var dc v1.DeploymentConfig
 	 err :=IntoResource(path, &dc)
+=======
+	"github.com/magiconair/properties/assert"
+	"fmt"
+	"gopkg.in/yaml.v2"
+	"os"
+)
+
+func TestIntoResourceFile(t *testing.T) {
+
+	var dc v1.DeploymentConfig
+	i := Injector{
+		Path:    os.TempDir(),
+		Name:    "hello-world-v1",
+		Version: "1.0",
+	}
+	err := i.IntoResource(dc)
+>>>>>>> master
 	log.Println(dc)
 	assert.Equal(t, nil, err)
 
@@ -32,6 +50,7 @@ func TestIntoObject(t *testing.T) {
 	debugMode := true
 	mesh := model.DefaultMeshConfig()
 	params := &inject.Params{
+<<<<<<< HEAD
 		InitImage:           inject.InitImageName(Hub, Tag, debugMode),
 		ProxyImage:          inject.ProxyImageName(Hub, Tag, debugMode),
 		ImagePullPolicy:     "IfNotPresent",
@@ -41,6 +60,17 @@ func TestIntoObject(t *testing.T) {
 		EnableCoreDump:      false,
 		Mesh:                &mesh,
 		DebugMode:           debugMode,
+=======
+		InitImage:       inject.InitImageName(Hub, Tag, debugMode),
+		ProxyImage:      inject.ProxyImageName(Hub, Tag, debugMode),
+		ImagePullPolicy: "IfNotPresent",
+		Verbosity:       DefaultVerbosity,
+		SidecarProxyUID: DefaultSidecarProxyUID,
+		Version:         "12345678",
+		EnableCoreDump:  false,
+		Mesh:            &mesh,
+		DebugMode:       debugMode,
+>>>>>>> master
 	}
 
 	sidecarTemplate, err := inject.GenerateTemplateFromParams(params)
@@ -70,7 +100,11 @@ func TestIntoObject(t *testing.T) {
 				ObjectMeta: metav1.ObjectMeta{
 					Name: name,
 					Labels: map[string]string{
+<<<<<<< HEAD
 						"app":  name,
+=======
+						"app": name,
+>>>>>>> master
 					},
 				},
 				Spec: corev1.PodSpec{
@@ -84,7 +118,11 @@ func TestIntoObject(t *testing.T) {
 							ReadinessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
 									Exec: &corev1.ExecAction{
+<<<<<<< HEAD
 										Command : []string{
+=======
+										Command: []string{
+>>>>>>> master
 											"curl",
 											"--silent",
 											"--show-error",
@@ -100,7 +138,11 @@ func TestIntoObject(t *testing.T) {
 							LivenessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
 									Exec: &corev1.ExecAction{
+<<<<<<< HEAD
 										Command : []string{
+=======
+										Command: []string{
+>>>>>>> master
 											"curl",
 											"--silent",
 											"--show-error",
@@ -151,7 +193,10 @@ func TestIntoObject(t *testing.T) {
 	log.Print(d)
 }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> master
 var data = `
 a: Easy!
 b:
@@ -197,4 +242,8 @@ func TestYaml(t1 *testing.T) {
 		log.Fatalf("error: %v", err)
 	}
 	fmt.Printf("--- m dump:\n%s\n\n", string(d))
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> master

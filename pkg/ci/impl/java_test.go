@@ -41,7 +41,11 @@ func TestJavaPipeline(t *testing.T)  {
 		Profile: "dev",
 		App: "customer",
 		Project: "demo",
-		Scm: ci.Scm{Url: os.Getenv("SCM_URL")},
+		Version: "v1",
+		Scm: ci.Scm{
+			Url: os.Getenv("SCM_URL"),
+			Ref: "master",
+			},
 		DeploymentConfigs: ci.DeploymentConfigs{
 			ForceUpdate: true,
 		},

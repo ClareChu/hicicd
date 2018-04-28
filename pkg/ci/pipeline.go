@@ -190,7 +190,12 @@ func (p *Pipeline) CreateDeploymentConfig(force bool, cb func(cfg interface{}) e
 		return err
 	}
 
-	err = dc.Create(&p.DeploymentConfigs.Env, &p.Ports, p.DeploymentConfigs.Replicas, force, p.DeploymentConfigs.HealthEndPoint)
+	err = dc.Create(&p.DeploymentConfigs.Env, &p.Ports, p.DeploymentConfigs.Replicas, force, p.DeploymentConfigs.HealthEndPoint,
+		func(cfg interface{}) error{
+			fullName := p.Name + "-" + p.Version
+			err := istio.InjectSideCar(cfg, fullName ,p.Version)
+			return err
+		})
 	if err != nil {
 		return err
 	}

@@ -20,6 +20,7 @@ import (
 	"github.com/hidevopsio/hiboot/pkg/log"
 	"github.com/hidevopsio/hiboot/pkg/system"
 	"github.com/hidevopsio/hicicd/pkg/orch"
+	"github.com/hidevopsio/hicicd/pkg/orch/istio"
 )
 
 func TestDeploymentConfigCreation(t *testing.T) {
@@ -63,7 +64,11 @@ func TestDeploymentConfigCreation(t *testing.T) {
 	assert.Equal(t, app, dc.Name)
 
 	// create dc
-	err = dc.Create(&env, &ports, 1, false, healthEndPoint)
+	err = dc.Create(&env, &ports, 1, true, healthEndPoint, func(cfg interface{}) error{
+		fullName := "hello-world-v1"
+		err := istio.InjectSideCar(cfg, fullName ,"v1")
+		return err
+	})
 	assert.Equal(t, nil, err)
 }
 
@@ -92,7 +97,11 @@ func TestDeploymentConfigDeletion(t *testing.T) {
 	projectName := "demo"
 	profile := "dev"
 	namespace := projectName + "-" + profile
+<<<<<<< HEAD
 	app := "hello-world"
+=======
+	app := "demo-consumer"
+>>>>>>> master
 	version := "v1"
 	dc, err := NewDeploymentConfig(app, namespace, version)
 	assert.Equal(t, nil, err)
