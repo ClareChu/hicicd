@@ -54,9 +54,10 @@ func NewDeploymentConfig(name, namespace, version string) (*DeploymentConfig, er
 	}, nil
 }
 
-func (dc *DeploymentConfig) Create(env interface{}, ports interface{}, replicas int32, force bool, healthEndPoint string) error {
+func (dc *DeploymentConfig) Create(env interface{}, ports interface{}, replicas int32, force bool, healthEndPoint string,
+		cb func(cfg interface{}) error) error {
 	log.Debug("DeploymentConfig.Create()")
-
+	//privileged := true
 	// env
 	e := make([]corev1.EnvVar, 0)
 	copier.Copy(&e, env)
@@ -112,9 +113,9 @@ func (dc *DeploymentConfig) Create(env interface{}, ports interface{}, replicas 
 										},
 									},
 								},
-								InitialDelaySeconds: 10,
+								InitialDelaySeconds: 60,
 								TimeoutSeconds:      1,
-								PeriodSeconds:       5,
+								PeriodSeconds:       60,
 							},
 							LivenessProbe: &corev1.Probe{
 								Handler: corev1.Handler{
@@ -130,7 +131,7 @@ func (dc *DeploymentConfig) Create(env interface{}, ports interface{}, replicas 
 								},
 								InitialDelaySeconds: 20,
 								TimeoutSeconds:      1,
-								PeriodSeconds:       5,
+								PeriodSeconds:       10,
 							},
 						},
 					},
@@ -158,10 +159,15 @@ func (dc *DeploymentConfig) Create(env interface{}, ports interface{}, replicas 
 			},
 		},
 	}
-
+/*	err := cb(cfg)
+	if err != nil {
+		return err
+	}*/
 	// inject side car here
-
 	result, err := dc.Interface.Get(dc.FullName, metav1.GetOptions{})
+
+	err = cb(result)
+
 	switch {
 	case err == nil:
 		// select update or patch according to the user's request
@@ -171,6 +177,7 @@ func (dc *DeploymentConfig) Create(env interface{}, ports interface{}, replicas 
 			if err == nil {
 				log.Infof("Updated DeploymentConfig %v.", result.Name)
 			} else {
+				log.Error("Updated  error %v", err)
 				return err
 			}
 		}
