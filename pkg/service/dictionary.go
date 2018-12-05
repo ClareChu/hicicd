@@ -7,8 +7,6 @@ import (
 	"github.com/hidevopsio/hicicd/pkg/admin"
 )
 
-const Dictionary  = "dictionary"
-
 type DictionaryService struct {
 	Repository db.KVRepository `inject:"repository,dataSourceType=bolt,namespace=dictionary"`
 }
@@ -16,13 +14,13 @@ type DictionaryService struct {
 func (ds *DictionaryService) Add(dictionary *admin.Dictionary) error {
 	d, err := json.Marshal(dictionary)
 	if err == nil {
-		ds.Repository.Put([]byte(Dictionary), []byte(dictionary.Id), d)
+		ds.Repository.Put([]byte(dictionary.Id), d)
 	}
 	return nil
 }
 
 func (ds *DictionaryService) Get(id string) (*admin.Dictionary, error) {
-	d, err := ds.Repository.Get([]byte(Dictionary), []byte(id))
+	d, err := ds.Repository.Get([]byte(id))
 	if err != nil {
 		return nil, err
 	}
@@ -32,7 +30,7 @@ func (ds *DictionaryService) Get(id string) (*admin.Dictionary, error) {
 }
 
 func (ds *DictionaryService) Delete(id string) error {
-	err := ds.Repository.Delete([]byte(Dictionary), []byte(id))
+	err := ds.Repository.Delete([]byte(id))
 	log.Debug("Delete Dictionary Service:", err)
 	return err
 }

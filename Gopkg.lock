@@ -354,7 +354,7 @@
     "pkg/utils/reflector",
   ]
   pruneopts = ""
-  revision = "17ee28ae938d75e2fc4d4c382f55795c111494fc"
+  revision = "4d0e9a4eb237abf0a38e1a35d2793552779ef9dc"
 
 [[projects]]
   branch = "master"

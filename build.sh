@@ -3,13 +3,8 @@
 echo  "GOOS=linux go build"
  GOOS=linux go build
 
-docker build -t hicicd .
+docker build -t docker-registry-default.app.vpclub.io/openshift/hicicd .
 
-docker tag hicicd docker.vpclub.cn/openshift/hicicd
+docker login -p $(oc whoami -t) -u unused docker-registry-default.app.vpclub.io
 
-docker push docker.vpclub.cn/openshift/hicicd
-
-oc delete imagestream hicicd -n hidevopsio
-
-oc apply -f hicicd.yaml -n  hidevopsio
-
+docker push docker-registry-default.app.vpclub.io/openshift/hicicd

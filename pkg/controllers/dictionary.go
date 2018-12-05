@@ -2,8 +2,8 @@ package controllers
 
 import (
 	"github.com/hidevopsio/hiboot/pkg/starter/web"
-	"github.com/hidevopsio/hicicd/pkg/service"
 	"github.com/hidevopsio/hicicd/pkg/admin"
+	"github.com/hidevopsio/hicicd/pkg/service"
 	"net/http"
 )
 
@@ -16,6 +16,7 @@ type DictionaryController struct {
 func init() {
 	web.Add(new(DictionaryController))
 }
+
 
 func (d *DictionaryController) Post(ctx *web.Context) {
 	dictionary := &admin.Dictionary{}
@@ -49,4 +50,3 @@ func (d *DictionaryController) Delete(ctx *web.Context) {
 		ctx.ResponseBody("success", nil)
 	}
 }
-

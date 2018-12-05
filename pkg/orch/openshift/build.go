@@ -73,7 +73,6 @@ func NewBuildConfig(namespace, name, scmUrl, scmRef, scmSecret, version, s2iImag
 		Name:      s2iImageStream,
 		Namespace: "openshift",
 	}
-
 	clientSet, err := buildv1.NewForConfig(orch.Config)
 	buildConfig := &BuildConfig{
 		BuildConfigs: clientSet.BuildConfigs(namespace),
