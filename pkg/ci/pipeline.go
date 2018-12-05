@@ -15,25 +15,23 @@
 package ci
 
 import (
+	"encoding/json"
 	"fmt"
-	"github.com/imdario/mergo"
 	"github.com/hidevopsio/hiboot/pkg/log"
 	"github.com/hidevopsio/hiboot/pkg/system"
 	"github.com/hidevopsio/hiboot/pkg/utils"
+	"github.com/hidevopsio/hicicd/pkg/auth"
+	"github.com/hidevopsio/hicicd/pkg/orch"
 	"github.com/hidevopsio/hicicd/pkg/orch/k8s"
 	"github.com/hidevopsio/hicicd/pkg/orch/openshift"
-	"github.com/hidevopsio/hicicd/pkg/orch"
-	"github.com/hidevopsio/hicicd/pkg/orch/istio"
-	"github.com/jinzhu/copier"
-	"path/filepath"
-	authorization_v1 "github.com/openshift/api/authorization/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	corev1 "k8s.io/api/core/v1"
-	"github.com/hidevopsio/hicicd/pkg/auth"
-	"os"
-	"strings"
-	"encoding/json"
+	"github.com/imdario/mergo"
 	"github.com/kevholditch/gokong"
+	authorization_v1 "github.com/openshift/api/authorization/v1"
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"os"
+	"path/filepath"
+	"strings"
 )
 
 type Scm struct {
@@ -69,26 +67,6 @@ type BuildConfigs struct {
 	Branch      string       `json:"branch"`
 }
 
-type IstioConfigs struct {
-	Enable              bool   `json:"enable"`
-	Version             string `json:"version"`
-	Namespace           string `json:"namespace"`
-	DockerHub           string `json:"docker_hub"`
-	MeshConfigFile      string `json:"mesh_config_file"`
-	InjectConfigFile    string `json:"inject_config_file"`
-	MeshConfigMapName   string `json:"mesh_config_map_name"`
-	InjectConfigMapName string `json:"inject_config_map_name"`
-	DebugMode           bool   `json:"debug_mode"`
-	SidecarProxyUID     uint64 `json:"sidecar_proxy_uid"`
-	Verbosity           int    `json:"verbosity"`
-	EnableCoreDump      bool   `json:"enable_core_dump"`
-	ImagePullPolicy     string `json:"image_pull_policy"`
-	IncludeIPRanges     string `json:"includeIPRanges"`
-	ExcludeIPRanges     string `json:"exclude_ip_ranges"`
-	IncludeInboundPorts string `json:"include_inbound_ports"`
-	ExcludeInboundPorts string `json:"exclude_inbound_ports"`
-}
-
 type Pipeline struct {
 	Name              string            `json:"name" validate:"required"`
 	App               string            `json:"app" validate:"required"`
@@ -104,7 +82,6 @@ type Pipeline struct {
 	Ports             []orch.Ports      `json:"ports"`
 	BuildConfigs      BuildConfigs      `json:"build_configs"`
 	DeploymentConfigs DeploymentConfigs `json:"deployment_configs"`
-	IstioConfigs      IstioConfigs      `json:"istio_configs"`
 	GatewayConfigs    GatewayConfigs    `json:"gateway_configs"`
 }
 
@@ -314,7 +291,7 @@ func (p *Pipeline) Analysis() error {
 	return nil
 }
 
-func (p *Pipeline) CreateDeploymentConfig(force bool, injectSidecar func(in interface{}) (interface{}, error)) error {
+func (p *Pipeline) CreateDeploymentConfig(force bool) error {
 	log.Debug("Pipeline.CreateDeploymentConfig()")
 
 	// new dc instance
@@ -325,7 +302,7 @@ func (p *Pipeline) CreateDeploymentConfig(force bool, injectSidecar func(in inte
 	var l map[string]string
 	labels, _ := json.Marshal(p.DeploymentConfigs.Labels)
 	err = json.Unmarshal(labels, &l)
-	err = dc.Create(&p.DeploymentConfigs.Env, l, &p.Ports, p.DeploymentConfigs.Replicas, force, p.DeploymentConfigs.HealthEndPoint, injectSidecar)
+	err = dc.Create(&p.DeploymentConfigs.Env, l, &p.Ports, p.DeploymentConfigs.Replicas, force, p.DeploymentConfigs.HealthEndPoint)
 	if err != nil {
 		log.Error("dc.Create ", err)
 		return err
@@ -459,14 +436,7 @@ func (p *Pipeline) Deploy() error {
 	if p.DeploymentConfigs.Enable {
 
 		// create dc - deployment config
-		err := p.CreateDeploymentConfig(p.DeploymentConfigs.ForceUpdate, func(in interface{}) (interface{}, error) {
-			if !p.IstioConfigs.Enable {
-				return in, nil
-			}
-			injector := &istio.Injector{}
-			copier.Copy(injector, p.IstioConfigs)
-			return injector.Inject(in)
-		})
+		err := p.CreateDeploymentConfig(p.DeploymentConfigs.ForceUpdate)
 		if err != nil {
 			log.Error(err.Error())
 			return fmt.Errorf("failed on CreateDeploymentConfig! %s", err.Error())

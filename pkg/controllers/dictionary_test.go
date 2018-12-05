@@ -24,9 +24,6 @@ func TestPostDictionary(t *testing.T) {
 	dictionary := &admin.Dictionary{
 		Id:"1",
 		Profiles: []string{"dev"},
-		Istio: admin.Istio{
-			Enable:false,
-		},
 		BuildConfigs: admin.BuildConfigs{
 			Enable:true,
 		},

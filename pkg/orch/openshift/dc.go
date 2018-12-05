@@ -54,7 +54,7 @@ func NewDeploymentConfig(name, namespace, version string) (*DeploymentConfig, er
 	}, nil
 }
 
-func (dc *DeploymentConfig) Create(env interface{}, labels map[string]string, ports interface{}, replicas int32, force bool, healthEndPoint string, injectSidecar func(in interface{}) (interface{}, error)) error {
+func (dc *DeploymentConfig) Create(env interface{}, labels map[string]string, ports interface{}, replicas int32, force bool, healthEndPoint string) error {
 	log.Debug("DeploymentConfig.Create()", force)
 
 	// env
@@ -97,38 +97,6 @@ func (dc *DeploymentConfig) Create(env interface{}, labels map[string]string, po
 							ImagePullPolicy: corev1.PullAlways,
 							Name:            dc.Name,
 							Ports:           p,
-							ReadinessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
-									Exec: &corev1.ExecAction{
-										Command : []string{
-											"curl",
-											"--silent",
-											"--show-error",
-											"--fail",
-											healthEndPoint,
-										},
-									},
-								},
-								InitialDelaySeconds: 60,
-								TimeoutSeconds:      1,
-								PeriodSeconds:       5,
-							},
-							LivenessProbe: &corev1.Probe{
-								Handler: corev1.Handler{
-									Exec: &corev1.ExecAction{
-										Command : []string{
-											"curl",
-											"--silent",
-											"--show-error",
-											"--fail",
-											healthEndPoint,
-										},
-									},
-								},
-								InitialDelaySeconds: 60,
-								TimeoutSeconds:      1,
-								PeriodSeconds:       5,
-							},
 						},
 					},
 					DNSPolicy:     corev1.DNSClusterFirst,
@@ -154,17 +122,6 @@ func (dc *DeploymentConfig) Create(env interface{}, labels map[string]string, po
 				},
 			},
 		},
-	}
-
-	// inject side car here
-	var err error
-	var out interface{}
-	if injectSidecar != nil {
-		out, err = injectSidecar(cfg)
-		if err != nil {
-			return err
-		}
-		cfg = out.(*v1.DeploymentConfig)
 	}
 
 	result, err := dc.Interface.Get(dc.FullName, metav1.GetOptions{})

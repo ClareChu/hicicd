@@ -47,9 +47,6 @@ func TestJavaPipeline(t *testing.T) {
 		Scm: ci.Scm{
 			Ref: "test",
 		},
-		IstioConfigs: ci.IstioConfigs{
-			Enable: false,
-		},
 		BuildConfigs : ci.BuildConfigs{
 			TagFrom:     "dev",
 			ImageStream: "s2i-nodejs:alpine",

@@ -3,7 +3,6 @@ package admin
 type Dictionary struct {
 	Id                string             `json:"id"`
 	Scm               Scm                `json:"scm"`
-	Istio             Istio              `json:"istio"`
 	BuildConfigs      BuildConfigs       `json:"build_configs"`
 	DeploymentConfigs DeploymentConfigs  `json:"deployment_configs"`
 	Profiles          []string           `json:"profiles"`
@@ -31,10 +30,6 @@ type DeploymentConfigs struct {
 }
 
 type BuildConfigs struct {
-	Enable bool `json:"enable"`
-}
-
-type Istio struct {
 	Enable bool `json:"enable"`
 }
 

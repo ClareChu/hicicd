@@ -21,7 +21,7 @@ type PipelineInterface interface {
 	RunUnitTest() error
 	RunIntegrationTest() error
 	Analysis() error
-	CreateDeploymentConfig(force bool, injectFn func(in interface{}) (interface{}, error)) error
+	CreateDeploymentConfig(force bool) error
 	Deploy() error
 	CreateService() error
 	CreateRoute() (string, error)
