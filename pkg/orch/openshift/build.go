@@ -15,18 +15,17 @@
 package openshift
 
 import (
-	"github.com/openshift/api/build/v1"
-	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	buildv1 "github.com/openshift/client-go/build/clientset/versioned/typed/build/v1"
-	"github.com/hidevopsio/hiboot/pkg/log"
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/watch"
-	"github.com/hidevopsio/hiboot/pkg/system"
-	"github.com/jinzhu/copier"
 	"fmt"
+	"github.com/hidevopsio/hiboot/pkg/log"
+	"github.com/hidevopsio/hiboot/pkg/system"
 	"github.com/hidevopsio/hicicd/pkg/orch"
-	imagev1 "github.com/openshift/api/image/v1"
+	"github.com/jinzhu/copier"
+	"github.com/openshift/api/build/v1"
+	buildv1 "github.com/openshift/client-go/build/clientset/versioned/typed/build/v1"
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/watch"
 )
 
 type Scm struct {
@@ -64,33 +63,15 @@ func NewBuildConfig(namespace, name, scmUrl, scmRef, scmSecret, version, s2iImag
 	}
 
 	var from corev1.ObjectReference
-	var is *imagev1.ImageStream
-	if !rebuild {
-		is, err = imageStream.Get()
-		// the images stream is exist with 0 tags, then delete it
-		if len(is.Status.Tags) == 0 {
-			imageStream.Delete()
-			is, err = imageStream.Get()
-		}
-	}
-
 	// create new images stream if it is not found
-	if errors.IsNotFound(err) || rebuild{
-		_, err := imageStream.Create(version)
-		if err != nil {
-			return nil, err
-		}
-		from = corev1.ObjectReference{
-			Kind:      "ImageStreamTag",
-			Name:      s2iImageStream,
-			Namespace: "openshift",
-		}
-	} else {
-		from = corev1.ObjectReference{
-			Kind:      "ImageStreamTag",
-			Name:      name + ":" + is.Status.Tags[0].Tag,
-			Namespace: namespace,
-		}
+	_, err = imageStream.Create(version)
+	if err != nil {
+		return nil, err
+	}
+	from = corev1.ObjectReference{
+		Kind:      "ImageStreamTag",
+		Name:      s2iImageStream,
+		Namespace: "openshift",
 	}
 
 	clientSet, err := buildv1.NewForConfig(orch.Config)
