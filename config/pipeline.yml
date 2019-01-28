@@ -10,7 +10,7 @@ pipeline:
   dockerRegistry: docker-registry.default.svc:5000
   buildConfigs:
     enable: true
-    rebuild: false
+    rebuild: true
   deploymentConfigs:
     enable: true
     forceUpdate: false
